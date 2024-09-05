@@ -311,6 +311,38 @@ button[type="submit"]:hover {
     background-color: transparent;
 }
 
+.online-users {
+    font-size: 18px;
+    color: white;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.controls {
+    text-align: center;
+    margin-top: 20px;
+}
+
+button {
+    background-color: #0098ff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+button:hover {
+    background-color: #006bb3;
+}
+
+button:disabled {
+    background-color: gray;
+    cursor: not-allowed;
+}
+
+
 /* Media queries for responsiveness */
 @media (max-width: 768px) {
     .section {
