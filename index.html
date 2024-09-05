@@ -4,21 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="assets/logo.png" class="icon">
   <link rel="stylesheet" href="styles.css">
-  <meta name="description" content="Linkyu: Seamless video calls with anyone, anywhere, on any device. Simply share the URL to connect instantly. Enjoy high-quality video communication without any hassle." />
-  <meta name="keywords" content="Linkyu, video calls, video communication, URL video call, seamless video call, cross-device video call, high-quality video call, video chat, online meetings, virtual meetings" />
-  <meta name="author" content="Linkyu">
-  <!-- Open Graph tags for better sharing on social media -->
-  <meta property="og:title" content="Linkyu - Seamless Video Calls Anywhere, Anytime" />
-  <meta property="og:description" content="Linkyu enables you to make video calls with anyone, anywhere, on any device. Share the URL and connect instantly with high-quality video communication." />
-  <meta property="og:image" content="assets/logo.png" />
-  <meta property="og:url" content="https://linkyu.pxxl.space" />
-  <meta property="og:type" content="website" />
-
-  <!-- Twitter Card tags for better sharing on Twitter -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Linkyu - Seamless Video Calls Anywhere, Anytime" />
-  <meta name="twitter:description" content="Linkyu enables you to make video calls with anyone, anywhere, on any device. Share the URL and connect instantly with high-quality video communication." />
-  <meta name="twitter:image" content="assets/logo.png" />
+  
   <title>Linkyu</title>
 </head>
 <body>
@@ -36,10 +22,19 @@
       <span class="icon close">✕</span>
     </div>
   </header>
-  <div class="copy">Send your URL to a friend to start a video call</div>
+
+  <!-- Show number of online users -->
+  <div class="online-users"><span id="onlineCount">0</span>Online users</div>
+
   <div class="videocall">
     <video id="remoteVideo" autoplay></video>
     <video id="localVideo" autoplay muted></video>
+  </div>
+
+  <!-- Search and Skip Buttons -->
+  <div class="controls">
+    <button id="searchBtn" onclick="searchUser()">Search for a User</button>
+    <button id="skipBtn" onclick="skipUser()" disabled>Skip User</button>
   </div>
   
   <script src="script.js"></script>
