@@ -22,11 +22,18 @@
       <span class="icon close">✕</span>
     </div>
   </header>
-  <div class="copy">Send your URL to a friend to start a video call</div>
+
+  <!-- Show number of online users -->
+  <div class="online-users">Online users: <span id="onlineCount">0</span></div>
+
   <div class="videocall">
     <video id="remoteVideo" autoplay></video>
     <video id="localVideo" autoplay muted></video>
+    <div id="centralText" class="default-text">Waiting to connect...</div>
   </div>
+  
+  <button id="searchBtn" class="search-btn" onclick="toggleSearch()">Start</button>
+  <button id="skipBtn" class="skip-btn" onclick="skipUser()" disabled>Skip</button>
   
   <script src="script.js"></script>
   <script>
