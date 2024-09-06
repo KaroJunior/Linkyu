@@ -1,0 +1,410 @@
+@import url('https://fonts.googleapis.com/css2?family=Gupter:wght@400;500;700&family=League+Spartan:wght@100..900&display=swap');
+
+body {
+    background: #00459E;
+    background-image: url("assets/dbg.svg");
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    margin: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 0 50px;
+    font-family: "Gupter", sans-serif;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 90%;
+    height: auto;
+    padding: 20px;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.5);
+    top: 0; /* Align it to the top */
+    position: fixed;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    z-index: 100;
+}
+
+
+.left {
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+    border-radius: 10%;
+}
+
+.title {
+    font-size: 40px;
+    font-weight: bold;
+    color: white;
+}
+
+.right {
+    display: flex;
+    align-items: center;
+    z-index: 101;
+}
+
+.nav-link {
+    font-size: 16px;
+    color: #fff;
+    text-decoration: none;
+    margin-left: 20px;
+    transition: 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #0098ff;
+}
+
+.hamburger {
+    display: none;
+    position: relative;
+    font-size: 24px;
+    cursor: pointer;
+    color: #fff;
+}
+
+.hamburger .icon {
+    display: block;
+}
+
+.hamburger .close {
+    display: none;
+}
+
+.right.open ~ .hamburger .icon {
+    display: none;
+}
+
+.right.open ~ .hamburger .close {
+    display: block;
+}
+
+.videocall {
+    width: 90%;
+    height: 80%;
+    background: black;
+    margin-top: 30px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    position: relative;
+    z-index: 1;
+}
+
+#remoteVideo {
+    width: 100%;
+    height: 100%;
+    background-color: #0b0b0c;
+    border-radius: 10px;
+    background-image: url("assets/is.svg");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 10%;
+}
+
+#localVideo {
+    z-index: 100;
+    position: absolute;
+    height: 20%;
+    width: 20%;
+    z-index: 100;
+    background-color: #0b0b0c;
+    right: 0;
+    bottom: 0;
+    border-top-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+video {
+    height: 100%;
+    width: 100%;
+}
+
+.copy {
+    align-content: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 16px;
+    color: white;
+    margin-top: 50px;
+}
+
+/* Mobile view adjustments */
+@media (max-width: 768px) {
+    body {
+        background-image: url("assets/mbg.svg");
+    }
+
+    .right {
+        display: flex;
+        flex-direction: column;
+        width: 50%;
+        position: fixed;
+        top: 0px;
+        right: -100%; /* Initially hide the menu off-screen */
+        height: auto;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000000000000001; /* Ensure it's above all elements */
+        transition: transform 0.3s ease; /* Smooth sliding transition */
+        transform: translateX(200%); /* Initially slide out of view */
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+
+    .right.open {
+        transform: translateX(100%); /* Slide in */
+    }
+    .nav-link {
+        padding: 10px 20px;
+        margin: 0;
+        border-bottom: 1px solid #fff;
+    }
+    .hamburger {
+        display: block;
+    }
+    body {
+        padding: 0 20px;
+    }
+    .header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+    .left {
+        flex: 1;
+        display: flex;
+        align-items: center;
+    }
+    .logo {
+        width: 30px;
+        height: 30px;
+    }
+    .title {
+        text-align: center;
+        font-size: 30px;
+    }
+    .hamburger {
+        flex: 1;
+        text-align: right;
+        order: 2;
+    }
+    .header .right {
+        top: 60px;
+        left: 0;
+    }
+    .copy {
+        font-size: 14px;
+        white-space: nowrap;
+        margin-bottom: 0px;
+    }
+    #remoteVideo {
+        background-size: 25%;
+    }
+}
+
+@media (max-width: 7325px) {
+    .videocall {
+        margin-top: 10px;
+    }
+}
+@media (min-width: 1000px) {
+    .copy {
+        z-index: 100;
+    }
+}
+@media (min-width: 1280px) {
+    .copy {
+        margin-top: 60px;
+    }
+}
+@media (max-width: 325px) {
+    .copy {
+        z-index: 100;
+    }
+}
+
+
+/* Contact form styling */
+.section {
+    margin-top: 10px;
+    width: 50%;
+}
+
+.container {
+    background-color: transparent;
+    backdrop-filter: blur(5px); /* Apply blur effect */
+    border: 1px solid #0098ff;
+    border-radius: 10px;
+    padding: 0 15px;
+    justify-content: center;
+}
+#contact h2 {
+    text-align: center;
+}
+
+#contact h2,
+label {
+    color: #fff;
+}
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+input[type="text"],
+input[type="email"],
+textarea {
+    width: 100%;
+    padding: 10px;
+    background-color: transparent;
+    border: 1px solid #0098ff; /* Green border */
+    border-radius: 5px;
+    color: #fff;
+    box-sizing: border-box; /* Ensures padding is included in the total width */
+}
+
+::placeholder {
+    color: #ffffff8f;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+textarea:focus {
+    outline: none; /* Remove default focus outline */
+    border-width: 2px; /* Increase border width when focused */
+    border-color: #0098ff; /* Brighter green border when focused */
+}
+
+textarea {
+    height: 150px; /* Adjust height for textarea */
+}
+
+button[type="submit"] {
+    width: 100%; /* Ensure the button takes the full width */
+    background-color: #0098ff;
+    color: #fff;
+    padding: 10px;
+    border: 2px solid #0098ff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-sizing: border-box; /* Ensures padding is included in the total width */
+}
+
+button[type="submit"]:hover {
+    background-color: transparent;
+}
+
+/* Media queries for responsiveness */
+@media (max-width: 768px) {
+    .section {
+        width: 90%;
+    }
+
+    .container {
+        padding: 0 10px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    h2 {
+        font-size: 24px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    textarea {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    button[type="submit"] {
+        padding: 8px 0;
+        font-size: 16px;
+    }
+}
+
+
+@media (max-width: 480px) {
+    h2 {
+        font-size: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 10px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    textarea {
+        padding: 6px;
+        font-size: 12px;
+    }
+
+    button[type="submit"] {
+        padding: 6px 0;
+        font-size: 14px;
+    }
+}
+
+@media (min-width: 1000px) {
+    .container {
+        margin-top: 50px;
+    }
+}
+
+@media (max-width: 325px) {
+    label {
+        font-size: 10px;
+    }
+
+    ::placeholder {
+        font-size: 10px;
+    }
+
+    #contact h2 {
+        font-size: 15px;
+    }
+
+    .container {
+        height: 90%;
+    }
+
+    .section {
+        margin-top: 100px;
+    }
+
+    textarea {
+        height: 100px; /* Adjust height for textarea */
+    }
+
+    .nav-link {
+        font-size: 10px;
+    }
+}
+
+@media (min-width: 800px) {
+    .section {
+        width: 70%;
+    }
+}
