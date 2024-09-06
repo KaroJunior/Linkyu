@@ -15,7 +15,7 @@ const centralText = document.getElementById('centralText');
 const searchBtn = document.getElementById('searchBtn');
 const skipBtn = document.getElementById('skipBtn');
 
-// Set initial state (Show "Waiting to connect..." and hide is.svg)
+// Set initial state
 centralText.style.display = 'block'; // Show "Waiting to connect..." on load
 remoteVideo.style.backgroundImage = 'none'; // No is.svg on load
 skipBtn.disabled = true;  // Disable skip on load
@@ -64,13 +64,13 @@ function skipUser() {
   }
 }
 
-// WebRTC functions
-
+// Connect to ScaleDrone room
 function connectToRoom() {
   room = drone.subscribe(roomName);
+
   room.on('open', error => {
     if (error) {
-      console.error(error);
+      console.error('Error connecting to room:', error);
       return;
     }
     console.log('Connected to room');
@@ -79,9 +79,12 @@ function connectToRoom() {
 
   room.on('members', members => {
     console.log('Connected members:', members);
-    // If there is only one person in the room, wait for the next person
-    if (members.length >= 2) {
-      startWebRTC(members[1].id);
+    // If there is more than one person in the room, connect to the first available user
+    if (members.length > 1) {
+      const otherMember = members.find(member => member.id !== drone.clientId);
+      if (otherMember) {
+        startWebRTC(otherMember.id);
+      }
     }
   });
 
@@ -92,6 +95,7 @@ function connectToRoom() {
   });
 }
 
+// Disconnect from ScaleDrone room
 function disconnectFromRoom() {
   if (pc) {
     pc.close();  // Close peer connection
@@ -108,12 +112,14 @@ function setupWebRTC(isInitiator) {
   pc = new RTCPeerConnection(configuration);
 
   pc.onicecandidate = event => {
+    console.log('ICE candidate:', event.candidate);
     if (event.candidate) {
       sendSignalingMessage({ candidate: event.candidate });
     }
   };
 
   pc.ontrack = event => {
+    console.log('Track received:', event.track);
     if (!remoteStream) {
       remoteStream = new MediaStream();
       remoteVideo.srcObject = remoteStream;
@@ -124,31 +130,42 @@ function setupWebRTC(isInitiator) {
 
   if (isInitiator) {
     navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+      console.log('User media obtained:', stream);
       stream.getTracks().forEach(track => pc.addTrack(track, stream));
       pc.createOffer().then(offer => {
         pc.setLocalDescription(offer);
         sendSignalingMessage({ sdp: offer });
       });
+    }).catch(error => {
+      console.error('Error accessing user media:', error);
     });
   }
 }
 
 // Handle incoming signaling messages
 function signalingMessage(message) {
+  console.log('Processing signaling message:', message);
   if (message.sdp) {
     pc.setRemoteDescription(new RTCSessionDescription(message.sdp)).then(() => {
       if (message.sdp.type === 'offer') {
         navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+          console.log('User media obtained:', stream);
           stream.getTracks().forEach(track => pc.addTrack(track, stream));
           pc.createAnswer().then(answer => {
             pc.setLocalDescription(answer);
             sendSignalingMessage({ sdp: answer });
           });
+        }).catch(error => {
+          console.error('Error accessing user media:', error);
         });
       }
+    }).catch(error => {
+      console.error('Error setting remote description:', error);
     });
   } else if (message.candidate) {
-    pc.addIceCandidate(new RTCIceCandidate(message.candidate));
+    pc.addIceCandidate(new RTCIceCandidate(message.candidate)).catch(error => {
+      console.error('Error adding ICE candidate:', error);
+    });
   }
 }
 
