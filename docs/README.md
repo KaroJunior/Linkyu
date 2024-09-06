@@ -1,5 +1,5 @@
 Linkyu is a simple, yet powerful website that allows you to make video calls with anyone, anywhere, just by sharing a URL. 
-The website is built using PHP, CSS, and JavaScript.
+The website is built using Html, CSS, and JavaScript.
 
 Features
 - Instant Video Calls: Share a URL and connect instantly with anyone.
