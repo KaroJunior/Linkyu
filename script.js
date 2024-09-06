@@ -15,11 +15,6 @@ const centralText = document.getElementById('centralText');
 const searchBtn = document.getElementById('searchBtn');
 const skipBtn = document.getElementById('skipBtn');
 
-// Set initial state
-centralText.style.display = 'block'; // Show "Waiting to connect..." on load
-remoteVideo.style.backgroundImage = 'none'; // No is.svg on load
-skipBtn.disabled = true;  // Disable skip on load
-
 searchBtn.addEventListener('click', toggleSearch);
 skipBtn.addEventListener('click', skipUser);
 
@@ -37,7 +32,7 @@ function startSearch() {
   isSearching = true;
   userConnected = false;
   searchBtn.textContent = 'End';
-  centralText.style.display = 'none';  // Hide the waiting text
+  centralText.style.display = 'none';  // Hide waiting text
   remoteVideo.style.backgroundImage = 'url("assets/is.svg")';  // Show is.svg during search
   skipBtn.disabled = true;  // Disable skip until user is connected
   connectToRoom();
@@ -49,7 +44,7 @@ function endSearch() {
   isSearching = false;
   searchBtn.textContent = 'Start';
   centralText.style.display = 'block';  // Show the waiting text again
-  remoteVideo.style.backgroundImage = 'none';  // Hide is.svg when not searching
+  remoteVideo.style.backgroundImage = 'none';  // Hide is.svg
   skipBtn.disabled = true;  // Disable skip
   disconnectFromRoom();
   console.log('Search stopped...');
@@ -64,13 +59,13 @@ function skipUser() {
   }
 }
 
-// Connect to ScaleDrone room
+// WebRTC functions
+
 function connectToRoom() {
   room = drone.subscribe(roomName);
-
   room.on('open', error => {
     if (error) {
-      console.error('Error connecting to room:', error);
+      console.error(error);
       return;
     }
     console.log('Connected to room');
@@ -79,12 +74,9 @@ function connectToRoom() {
 
   room.on('members', members => {
     console.log('Connected members:', members);
-    // If there is more than one person in the room, connect to the first available user
-    if (members.length > 1) {
-      const otherMember = members.find(member => member.id !== drone.clientId);
-      if (otherMember) {
-        startWebRTC(otherMember.id);
-      }
+    // If there is only one person in the room, wait for the next person
+    if (members.length >= 2) {
+      startWebRTC(members[1].id);
     }
   });
 
@@ -95,7 +87,6 @@ function connectToRoom() {
   });
 }
 
-// Disconnect from ScaleDrone room
 function disconnectFromRoom() {
   if (pc) {
     pc.close();  // Close peer connection
@@ -112,14 +103,12 @@ function setupWebRTC(isInitiator) {
   pc = new RTCPeerConnection(configuration);
 
   pc.onicecandidate = event => {
-    console.log('ICE candidate:', event.candidate);
     if (event.candidate) {
       sendSignalingMessage({ candidate: event.candidate });
     }
   };
 
   pc.ontrack = event => {
-    console.log('Track received:', event.track);
     if (!remoteStream) {
       remoteStream = new MediaStream();
       remoteVideo.srcObject = remoteStream;
@@ -130,42 +119,31 @@ function setupWebRTC(isInitiator) {
 
   if (isInitiator) {
     navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-      console.log('User media obtained:', stream);
       stream.getTracks().forEach(track => pc.addTrack(track, stream));
       pc.createOffer().then(offer => {
         pc.setLocalDescription(offer);
         sendSignalingMessage({ sdp: offer });
       });
-    }).catch(error => {
-      console.error('Error accessing user media:', error);
     });
   }
 }
 
 // Handle incoming signaling messages
 function signalingMessage(message) {
-  console.log('Processing signaling message:', message);
   if (message.sdp) {
     pc.setRemoteDescription(new RTCSessionDescription(message.sdp)).then(() => {
       if (message.sdp.type === 'offer') {
         navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-          console.log('User media obtained:', stream);
           stream.getTracks().forEach(track => pc.addTrack(track, stream));
           pc.createAnswer().then(answer => {
             pc.setLocalDescription(answer);
             sendSignalingMessage({ sdp: answer });
           });
-        }).catch(error => {
-          console.error('Error accessing user media:', error);
         });
       }
-    }).catch(error => {
-      console.error('Error setting remote description:', error);
     });
   } else if (message.candidate) {
-    pc.addIceCandidate(new RTCIceCandidate(message.candidate)).catch(error => {
-      console.error('Error adding ICE candidate:', error);
-    });
+    pc.addIceCandidate(new RTCIceCandidate(message.candidate));
   }
 }
 
@@ -180,7 +158,7 @@ function sendSignalingMessage(message) {
 // When a user connects
 function onUserConnected() {
   userConnected = true;
-  remoteVideo.style.backgroundImage = 'none';  // Hide is.svg when a user is connected
+  remoteVideo.style.backgroundImage = 'none';  // Hide is.svg when connected
   centralText.style.display = 'none';  // Hide the central text
   skipBtn.disabled = false;  // Enable skip
   console.log('User connected...');
@@ -189,13 +167,8 @@ function onUserConnected() {
 // When a user disconnects
 function onUserDisconnected() {
   userConnected = false;
-  if (isSearching) {
-    remoteVideo.style.backgroundImage = 'url("assets/is.svg")';  // Show is.svg again when searching
-    centralText.style.display = 'none';  // Keep the waiting text hidden during searching
-  } else {
-    remoteVideo.style.backgroundImage = 'none';  // Hide is.svg when search is not active
-    centralText.style.display = 'block';  // Show the waiting text again
-  }
+  remoteVideo.style.backgroundImage = 'url("assets/is.svg")';  // Show is.svg when searching again
+  centralText.style.display = 'block';  // Show the central text again
   skipBtn.disabled = true;  // Disable skip
   console.log('User disconnected...');
 }
