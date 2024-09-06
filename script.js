@@ -1,117 +1,184 @@
-// Generate random room name if needed
-if (!location.hash) {
-  location.hash = Math.floor(Math.random() * 0xFFFFFF).toString(16);
-}
-const roomHash = location.hash.substring(1);
-  
-// TODO: Replace with your own channel ID
 const drone = new ScaleDrone('pXUPdRgMPORJFyCn');
-// Room name needs to be prefixed with 'observable-'
+const roomHash = location.hash.substring(1);
 const roomName = 'observable-' + roomHash;
 const configuration = {
-  iceServers: [{
-    urls: 'stun:stun.l.google.com:19302'
-  }]
+  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 };
-let room;
-let pc;
-  
-  
-function onSuccess() {};
-function onError(error) {
-  console.error(error);
-};
-  
-drone.on('open', error => {
-  if (error) {
-    return console.error(error);
+
+let room, pc;
+let isSearching = false;
+let userConnected = false;
+let remoteStream = null;
+
+const remoteVideo = document.getElementById('remoteVideo');
+const centralText = document.getElementById('centralText');
+const searchBtn = document.getElementById('searchBtn');
+const skipBtn = document.getElementById('skipBtn');
+
+// Set initial state (Show "Waiting to connect..." and hide is.svg)
+centralText.style.display = 'block'; // Show "Waiting to connect..." on load
+remoteVideo.style.backgroundImage = 'none'; // No is.svg on load
+skipBtn.disabled = true;  // Disable skip on load
+
+searchBtn.addEventListener('click', toggleSearch);
+skipBtn.addEventListener('click', skipUser);
+
+// Toggle search when the search button is clicked
+function toggleSearch() {
+  if (!isSearching) {
+    startSearch();
+  } else {
+    endSearch();
   }
+}
+
+// Start searching for a user
+function startSearch() {
+  isSearching = true;
+  userConnected = false;
+  searchBtn.textContent = 'End';
+  centralText.style.display = 'none';  // Hide the waiting text
+  remoteVideo.style.backgroundImage = 'url("assets/is.svg")';  // Show is.svg during search
+  skipBtn.disabled = true;  // Disable skip until user is connected
+  connectToRoom();
+  console.log('Search started...');
+}
+
+// End searching and reset
+function endSearch() {
+  isSearching = false;
+  searchBtn.textContent = 'Start';
+  centralText.style.display = 'block';  // Show the waiting text again
+  remoteVideo.style.backgroundImage = 'none';  // Hide is.svg when not searching
+  skipBtn.disabled = true;  // Disable skip
+  disconnectFromRoom();
+  console.log('Search stopped...');
+}
+
+// Skip current user and search for a new one
+function skipUser() {
+  if (userConnected) {
+    console.log('Skipping user...');
+    disconnectFromRoom();
+    startSearch();  // Restart search after skipping
+  }
+}
+
+// WebRTC functions
+
+function connectToRoom() {
   room = drone.subscribe(roomName);
   room.on('open', error => {
     if (error) {
-      onError(error);
-    }
-  });
-  // We're connected to the room and received an array of 'members'
-  // connected to the room (including us). Signaling server is ready.
-  room.on('members', members => {
-    console.log('MEMBERS', members);
-    // If we are the second user to connect to the room we will be creating the offer
-    const isOfferer = members.length === 2;
-    startWebRTC(isOfferer);
-  });
-});
-  
-// Send signaling data via Scaledrone
-function sendMessage(message) {
-  drone.publish({
-    room: roomName,
-    message
-  });
-}
-  
-function startWebRTC(isOfferer) {
-  pc = new RTCPeerConnection(configuration);
-  
-  // 'onicecandidate' notifies us whenever an ICE agent needs to deliver a
-  // message to the other peer through the signaling server
-  pc.onicecandidate = event => {
-    if (event.candidate) {
-      sendMessage({'candidate': event.candidate});
-    }
-  };
-  
-  // If user is offerer let the 'negotiationneeded' event create the offer
-  if (isOfferer) {
-    pc.onnegotiationneeded = () => {
-      pc.createOffer().then(localDescCreated).catch(onError);
-    }
-  }
-  
-  // When a remote stream arrives display it in the #remoteVideo element
-  pc.onaddstream = event => {
-    remoteVideo.srcObject = event.stream;
-    remoteVideo.style.backgroundImage = 'none';
-  };
-  
-  navigator.mediaDevices.getUserMedia({
-    audio: true,
-    video: true,
-  }).then(stream => {
-    // Display your local video in #localVideo element
-    localVideo.srcObject = stream;
-    // Add your stream to be sent to the conneting peer
-    pc.addStream(stream);
-  }, onError);
-  
-  // Listen to signaling data from Scaledrone
-  room.on('data', (message, client) => {
-    // Message was sent by us
-    if (client.id === drone.clientId) {
+      console.error(error);
       return;
     }
-  
-    if (message.sdp) {
-      // This is called after receiving an offer or answer from another peer
-      pc.setRemoteDescription(new RTCSessionDescription(message.sdp), () => {
-        // When receiving an offer lets answer it
-        if (pc.remoteDescription.type === 'offer') {
-          pc.createAnswer().then(localDescCreated).catch(onError);
-        }
-      }, onError);
-    } else if (message.candidate) {
-      // Add the new ICE candidate to our connections remote description
-      pc.addIceCandidate(
-        new RTCIceCandidate(message.candidate), onSuccess, onError
-      );
+    console.log('Connected to room');
+    setupWebRTC(true); // Initiate WebRTC connection
+  });
+
+  room.on('members', members => {
+    console.log('Connected members:', members);
+    // If there is only one person in the room, wait for the next person
+    if (members.length >= 2) {
+      startWebRTC(members[1].id);
+    }
+  });
+
+  room.on('message', message => {
+    if (message.clientId !== drone.clientId) {
+      signalingMessage(message.data);
     }
   });
 }
-  
-function localDescCreated(desc) {
-  pc.setLocalDescription(
-    desc,
-    () => sendMessage({'sdp': pc.localDescription}),
-    onError
-  );
+
+function disconnectFromRoom() {
+  if (pc) {
+    pc.close();  // Close peer connection
+    pc = null;  // Reset peer connection object
+  }
+  if (room) {
+    room.unsubscribe();  // Leave the ScaleDrone room
+    room = null;  // Reset the room object
+  }
+}
+
+// Setup WebRTC peer connection
+function setupWebRTC(isInitiator) {
+  pc = new RTCPeerConnection(configuration);
+
+  pc.onicecandidate = event => {
+    if (event.candidate) {
+      sendSignalingMessage({ candidate: event.candidate });
+    }
+  };
+
+  pc.ontrack = event => {
+    if (!remoteStream) {
+      remoteStream = new MediaStream();
+      remoteVideo.srcObject = remoteStream;
+    }
+    remoteStream.addTrack(event.track);
+    onUserConnected();
+  };
+
+  if (isInitiator) {
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+      pc.createOffer().then(offer => {
+        pc.setLocalDescription(offer);
+        sendSignalingMessage({ sdp: offer });
+      });
+    });
+  }
+}
+
+// Handle incoming signaling messages
+function signalingMessage(message) {
+  if (message.sdp) {
+    pc.setRemoteDescription(new RTCSessionDescription(message.sdp)).then(() => {
+      if (message.sdp.type === 'offer') {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+          stream.getTracks().forEach(track => pc.addTrack(track, stream));
+          pc.createAnswer().then(answer => {
+            pc.setLocalDescription(answer);
+            sendSignalingMessage({ sdp: answer });
+          });
+        });
+      }
+    });
+  } else if (message.candidate) {
+    pc.addIceCandidate(new RTCIceCandidate(message.candidate));
+  }
+}
+
+// Send signaling messages via ScaleDrone
+function sendSignalingMessage(message) {
+  drone.publish({
+    room: roomName,
+    message: message
+  });
+}
+
+// When a user connects
+function onUserConnected() {
+  userConnected = true;
+  remoteVideo.style.backgroundImage = 'none';  // Hide is.svg when a user is connected
+  centralText.style.display = 'none';  // Hide the central text
+  skipBtn.disabled = false;  // Enable skip
+  console.log('User connected...');
+}
+
+// When a user disconnects
+function onUserDisconnected() {
+  userConnected = false;
+  if (isSearching) {
+    remoteVideo.style.backgroundImage = 'url("assets/is.svg")';  // Show is.svg again when searching
+    centralText.style.display = 'none';  // Keep the waiting text hidden during searching
+  } else {
+    remoteVideo.style.backgroundImage = 'none';  // Hide is.svg when search is not active
+    centralText.style.display = 'block';  // Show the waiting text again
+  }
+  skipBtn.disabled = true;  // Disable skip
+  console.log('User disconnected...');
 }
